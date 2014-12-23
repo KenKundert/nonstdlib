@@ -39,6 +39,30 @@ def plural(count, singular, plural=None):
 def indent(string, indent='  '):
     return indent + string.replace('\n', '\n' + indent)
 
+def conjoin(lst, conj=' and ', sep=', '):
+    # Like join, but supports a conjunction
+    """
+    Conjunction Join
+    Return the list joined into a string, where conj is used to join the last
+    two items in the list, and sep is used to join the others.
+
+    Examples:
+    >>> conjoin([], ' or ')
+    u''
+    >>> conjoin(['a'], ' or ')
+    u'a'
+    >>> conjoin(['a', 'b'], ' or ')
+    u'a or b'
+    >>> conjoin(['a', 'b', 'c'])
+    u'a, b and c'
+    """
+    if type(lst) == set:
+        lst = list(lst)
+        lst.sort()
+    if conj != None and len(lst) > 1:
+        lst = lst[0:-2] + [lst[-2] + conj + lst[-1]]
+    return sep.join(lst)
+
 
 if __name__ == "__main__":
 

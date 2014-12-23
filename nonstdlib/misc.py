@@ -68,3 +68,21 @@ def is_iterable(obj):
     except: return False
     return isinstance(obj, basestring)
 
+
+def cull(l):
+    """
+    Return the list given as an argument with the Nones removed.
+
+    Examples:
+    >>> cull([])
+    []
+    >>> cull([None])
+    []
+    >>> cull(['a', None, 'b'])
+    [u'a', u'b']
+    >>> cull(['a', 'b', 'c', None])
+    [u'a', u'b', u'c']
+    >>> cull([None, 1, 2, 3])
+    [1, 2, 3]
+    """
+    return [each for each in l if each != None]
