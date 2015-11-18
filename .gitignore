@@ -1,2 +1,6 @@
 *.pyc
 .*.sw*
+*.egg-info
+/MANIFEST
+/env
+/.cache

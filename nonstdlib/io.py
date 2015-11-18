@@ -13,6 +13,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
+import contextlib
 
 colors = {
     'normal'        : 0,
@@ -31,86 +32,107 @@ styles = {
     'reverse'       : 2 }
 
 
-class Muffler(object):
+def printf(string, *args, **kwargs):
+    print(string.format(*args, **kwargs))
 
-    class File:
+def echo(*args, **kwargs):
+    print(args, kwargs or '')
+
+@contextlib.contextmanager
+def capture_output(stdout=True, stderr=True, muffle=False):
+
+    class CapturedOutput:
 
         def __init__(self):
-            self.string = ""
+            self.stdout = ""
+            self.stderr = ""
 
-        def __str__(self):
-            return self.string
+        def __contains__(self, phrase):
+            return (phrase in self.stdout) or (phrase in self.stderr)
+
+    class CapturedStream:
+
+        def __init__(self, stream, write_callback):
+            self.stream = stream
+            self.write_callback = write_callback
 
         def write(self, string):
-            self.string += string
+            if not muffle: self.stream.write(string)
+            self.write_callback(string)
 
         def flush(self):
-            pass
+            self.stream.flush()
 
 
-    def __init__(self, **files):
-        self.stdout = sys.stdout
-        self.stderr = sys.stderr
+    captured_output = CapturedOutput()
 
-        self.files = {
-                'stdout' : files['stdout'] if 'stdout' in files else True,
-                'stderr' : files['stderr'] if 'stderr' in files else True }
+    def write_to_stdout(message):
+        captured_output.stdout += message
 
-        self.file = Muffler.File()
-
-    def __str__(self):
-        return str(self.file)
-
-    def __contains__(self, string):
-        return string in str(self)
-
-    def __enter__(self):
-        if self.files['stdout']:
-            sys.stdout = self.file
-            
-        if self.files['stderr']:
-            sys.stderr = self.file
-
-        return self
-
-    def __exit__(self, *ignore):
-        sys.stdout = self.stdout
-        sys.stderr = self.stderr
+    def write_to_stderr(message):
+        captured_output.stderr += message
 
 
+    try:
+        if stdout: sys.stdout = CapturedStream(sys.stdout, write_to_stdout)
+        if stderr: sys.stderr = CapturedStream(sys.stderr, write_to_stderr)
+        yield captured_output
+
+    finally:
+        if stdout: sys.stdout = sys.stdout.stream
+        if stderr: sys.stderr = sys.stderr.stream
+
+@contextlib.contextmanager
+def muffle(stdout=True, stderr=True):
+    with capture_output(stdout, stderr, muffle=True):
+        yield
+
+
+def print_color(string, name, style='normal', when='auto'):
+    print(color(string, name, style, when))
 
 def write(string):
     """ Write the given string to standard out. """
     sys.stdout.write(string)
-    sys.stdout.flush()
+    if sys.stdout.isatty():
+        sys.stdout.flush()
 
-def write_color(string, name, style='normal'):
+def write_color(string, name, style='normal', when='auto'):
     """ Write the given colored string to standard out. """
-    write(color(string, name, style))
+    write(color(string, name, style, when))
 
 def update(string):
     """ Replace the existing line with the given string. """
     clear()
     write(string)
     
-def update_color(string, name, style='normal'):
+def update_color(string, name, style='normal', when='auto'):
     """ Replace the existing line with the given colored string. """
     clear()
-    write(string)
+    write_color(string, name, style, when)
 
 def progress(current, total):
     """ Display a simple progress report. """
     update('[%d/%d] ' % (current, total))
 
-def progress_color(current, total, name, style='normal'):
+def progress_color(current, total, name, style='normal', when='auto'):
     """ Display a simple, colored progress report. """
-    update_color('[%d/%d] ' % (current, total), name, style)
+    update_color('[%d/%d] ' % (current, total), name, style, when)
 
-def color(string, name, style='normal'):
+def color(string, name, style='normal', when='auto'):
     """ Change the color of the given string. """
     prefix = '\033[%d;%dm' % (styles[style], colors[name])
     suffix = '\033[%d;%dm' % (styles['normal'], colors['normal'])
-    return prefix + string + suffix
+    color_string = prefix + string + suffix
+
+    if when == 'always':
+        return color_string
+    elif when == 'auto':
+        return color_string if sys.stdout.isatty() else string
+    elif when == 'never':
+        return string
+    else:
+        raise ValueError("when must be one of: 'always', 'auto', 'never'")
 
 def move(x, y):
     """ Move cursor to the given coordinates. """
@@ -140,19 +162,19 @@ def clear_eol():
     """ Clear the screen to end of line. """
     write('\033[0K')
 
-def save():
+def save_cursor():
     """ Save the cursor position. """
     write('\033[s')
 
-def restore():
+def restore_cursor():
     """ Restore the cursor position. """
     write('\033[u')
 
-def conceal():
+def conceal_cursor():
     """ Conceal the cursor. """
     write('\033[?25l')
 
-def reveal():
+def reveal_cursor():
     """ Reveal the cursor. """
     write('\033[?25h')
 
@@ -201,7 +223,7 @@ if __name__ == '__main__':
     greeting = "Hello world!"
 
     with muffler:
-        print(greeting)
+        print(greeting, file=sys.stderr)
 
     assert str(muffler) == greeting + '\n'
     print("All tests passed!")
