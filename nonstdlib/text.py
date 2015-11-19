@@ -6,6 +6,11 @@ from __future__ import unicode_literals
 
 import re
 
+# wrap and indent both largely duplicate functions of the same name from the 
+# standard textwrap module.
+#
+# -Ken
+
 def wrap(*lines, **options):
     """ Combines the lines given in the list argument into a single string 
     wrapped to fit inside an 80-character (by default) display.  Both the 
@@ -63,10 +68,46 @@ def conjoin(lst, conj=' and ', sep=', '):
         lst = lst[0:-2] + [lst[-2] + conj + lst[-1]]
     return sep.join(lst)
 
+def fmt(message, *args, **kwargs):
+    r"""
+    Convert a message with embedded attributes to a string. The values for the 
+    attributes can come from the argument list, as with ''.format(), or they may 
+    come from the local scope (found by introspection).
+
+    Examples:
+    >>> from logger import fmt
+    >>> s = 'str var'
+    >>> d = {'msg': 'dict val'}
+    >>> class Class:
+    ...     a = 'cls attr'
+
+    >>> print(fmt("by order: {0}, {1[msg]}, {2.a}.", s, d, Class))
+    by order: str var, dict val, cls attr.
+    >>> print(fmt("by name: {S}, {D[msg]}, {C.a}.", S=s, D=d, C=Class))
+    by name: str var, dict val, cls attr.
+
+    The following works, but does not work with doctests
+    # >>> print(fmt("by magic: {s}, {d[msg]}, {c.a}."))
+    # by magic: str var, dict val, cls attr.
+    """
+    import inspect
+
+    # Inspect variables from the source frame.
+    frame = inspect.stack()[-1][0]
+
+    # Collect all the variables in the scope of the calling code, so they 
+    # can be substituted into the message.
+    attrs = {}
+    attrs.update(frame.f_globals)
+    attrs.update(frame.f_locals)
+    attrs.update(kwargs)
+
+    return message.format(*args, **attrs)
 
 if __name__ == "__main__":
 
-    print(wrap(
+    sig = '\n\n-fuxit'
+    print(fmt(wrap(
             'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi ',
             'lobortis posuere rutrum. Nam eu aliquam dolor. Fusce eleifend ',
             'facilisis nisi in blandit. Donec vitae turpis ipsum. In leo ',
@@ -81,5 +122,5 @@ if __name__ == "__main__":
             'dolor, vel scelerisque purus tellus quis leo. Donec pulvinar ',
             'ullamcorper arcu, quis scelerisque orci ornare nec. Donec ',
             'vitae urna ac arcu ultricies posuere. Morbi fermentum molestie ',
-            'libero, eu ultricies orci placerat eget.', 
-            columns=40, indent=4))
+            'libero, eu ultricies orci placerat eget.{sig}',
+            columns=40, indent=4)))
