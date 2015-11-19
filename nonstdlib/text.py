@@ -75,7 +75,7 @@ def fmt(message, *args, **kwargs):
     come from the local scope (found by introspection).
 
     Examples:
-    >>> from logger import fmt
+    >>> from text import fmt
     >>> s = 'str var'
     >>> d = {'msg': 'dict val'}
     >>> class Class:

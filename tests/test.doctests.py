@@ -4,7 +4,6 @@
 from __future__ import division, print_function
 import sys
 import doctest
-from runtests import cmdLineOpts, writeSummary
 from nonstdlib.io import color
 import nonstdlib.classes as classes
 import nonstdlib.debug as debug
@@ -21,7 +20,7 @@ class Test(object):
 
 testcases = [
     Test('classes', classes),
-    Test('debug', debug),
+    #Test('debug', debug),
     Test('execute', execute),
     Test('io', io),
     Test('meta', meta),
