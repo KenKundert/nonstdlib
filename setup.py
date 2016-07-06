@@ -1,28 +1,45 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# encoding: utf-8
 
-import distutils.core
-import subprocess, shlex
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
-# Uploading to PyPI
-# =================
-# The first time only:
-# $ python setup.py register -r pypi
-#
-# Every version bump:
-# $ git tag <version>; git push
-# $ python setup.py sdist upload -r pypi
+import re
+with open('nonstdlib/__init__.py') as file:
+    version_pattern = re.compile("__version__ = '(.*)'")
+    version = version_pattern.search(file.read()).group(1)
 
-version = '1.4'
-distutils.core.setup(
-        name='nonstdlib',
-        version=version,
-        author='Kale Kundert',
-        author_email='kale@thekunderts.net',
-        url='https://github.com/kalekundert/nonstdlib',
-        download_url='https://github.com/kalekundert/nonstdlib/tarball/'+version,
-        license='MIT',
-        description="A collection of general-purpose utilities.",
-        long_description=open('README.rst').read(),
-        keywords=['utilities', 'library'],
-        packages=['nonstdlib'],
+with open('README.rst') as file:
+    readme = file.read()
+
+setup(
+    name='nonstdlib',
+    version=version,
+    author='Kale Kundert',
+    author_email='kale@thekunderts.net',
+    description='A collection of general-purpose utilities',
+    long_description=readme,
+    url='https://github.com/kalekundert/nonstdlib',
+    packages=[
+        'nonstdlib',
+    ],
+    include_package_data=True,
+    install_requires=[
+        'six',
+    ],
+    license='MIT',
+    zip_safe=False,
+    keywords=[
+        'nonstdlib',
+    ],
+    classifiers=[
+        'Development Status :: 2 - Pre-Alpha',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Natural Language :: English',
+        'Programming Language :: Python :: 3',
+        'Topic :: Software Development :: Libraries',
+    ],
 )

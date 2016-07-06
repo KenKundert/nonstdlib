@@ -12,9 +12,9 @@ import itertools
 
 infinity = inf = float("inf")
 
-def span(start, stop, count=50):
-    from numpy import linspace
-    return list(linspace(start, stop, num=count))
+def span(start, stop, steps=50):
+    step = (stop - start) / (steps - 1)
+    return (start + i * step for i in range(steps))
 
 def clamp(value, lowest, highest):
     if lowest > highest:
@@ -68,24 +68,6 @@ def is_iterable(obj):
     except: return False
     return isinstance(obj, basestring)
 
-def cull(l):
-    """
-    Return the list given as an argument with the Nones removed.
-
-    Examples:
-    >>> cull([])
-    []
-    >>> cull([None])
-    []
-    >>> cull(['a', None, 'b'])
-    [u'a', u'b']
-    >>> cull(['a', 'b', 'c', None])
-    [u'a', u'b', u'c']
-    >>> cull([None, 1, 2, 3])
-    [1, 2, 3]
-    """
-    return [each for each in l if each != None]
-
 def weighted_choice(choices, weights):
     total = sum(w for w in weights)
     threshold = random.uniform(0, total)
@@ -100,3 +82,5 @@ def weighted_choice(choices, weights):
     # But if we do, returning the last choice is clearly the right action.
 
     return choices[-1]
+
+
